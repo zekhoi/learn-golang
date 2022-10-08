@@ -2,10 +2,11 @@ package handler
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zekhoi/learn-golang/request"
-	"github.com/zekhoi/learn-golang/service"
+	"github.com/zekhoi/learn-golang/pkg/request"
+	"github.com/zekhoi/learn-golang/pkg/service"
 )
 
 type shortenHandler struct {
@@ -22,42 +23,44 @@ func (h *shortenHandler) CreateShorten(c *gin.Context) {
 	err := c.ShouldBindJSON(&shortenRequest)
 
 	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
 
+	_, err = url.ParseRequestURI(shortenRequest.OriginalUrl)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	shorten, err := h.service.CreateShorten(shortenRequest)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"code":   http.StatusCreated,
-		"status": "Created",
+		"status": http.StatusText(http.StatusCreated),
 		"data":   shorten,
 	})
 }
 
 func (h *shortenHandler) GetShortenByCode(c *gin.Context) {
-	var request request.GetShortenRequest
+	code := c.Param("code")
 
-	err := c.ShouldBindJSON(&request)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-	}
-
-	shorten, err := h.service.GetShortenByCode(request)
+	shorten, err := h.service.GetShortenByCode(code)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"code":   http.StatusOK,
-		"status": "OK",
+		"status": http.StatusText(http.StatusOK),
 		"data":   shorten,
 	})
 }
@@ -66,12 +69,13 @@ func (h *shortenHandler) GetAllShorten(c *gin.Context) {
 	shortens, err := h.service.GetShortens()
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"code":   http.StatusOK,
-		"status": "OK",
+		"status": http.StatusText(http.StatusOK),
 		"data":   shortens,
 	})
 }

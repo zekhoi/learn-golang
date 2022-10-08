@@ -1,14 +1,15 @@
 package service
 
 import (
-	"github.com/zekhoi/learn-golang/entity"
-	"github.com/zekhoi/learn-golang/repository"
-	"github.com/zekhoi/learn-golang/request"
+	"github.com/teris-io/shortid"
+	"github.com/zekhoi/learn-golang/pkg/entity"
+	"github.com/zekhoi/learn-golang/pkg/repository"
+	"github.com/zekhoi/learn-golang/pkg/request"
 )
 
 type ShortenService interface {
 	CreateShorten(request request.CreateShortenRequest) (entity.Shorten, error)
-	GetShortenByCode(request request.GetShortenRequest) (entity.Shorten, error)
+	GetShortenByCode(code string) (entity.Shorten, error)
 	GetShortens() ([]entity.Shorten, error)
 }
 
@@ -30,9 +31,9 @@ func (s *shortenService) GetShortens() ([]entity.Shorten, error) {
 	return shortens, nil
 }
 
-func (s *shortenService) GetShortenByCode(request request.GetShortenRequest) (entity.Shorten, error) {
-	shorten, err := s.repository.FindByCode(request.ShortUrl)
-	// fmt.Println(order)
+func (s *shortenService) GetShortenByCode(code string) (entity.Shorten, error) {
+	shorten, err := s.repository.FindByCode(code)
+
 	if err != nil {
 		return shorten, err
 	}
@@ -41,14 +42,14 @@ func (s *shortenService) GetShortenByCode(request request.GetShortenRequest) (en
 }
 
 func (s *shortenService) CreateShorten(request request.CreateShortenRequest) (entity.Shorten, error) {
+
 	shorten := entity.Shorten{}
 	shorten.OriginalUrl = request.OriginalUrl
-	shorten.CustomUrl = request.CustomUrl
-
+	shorten.ShortUrl = shortid.MustGenerate()
 	newShorten, err := s.repository.Create(shorten)
 
 	if err != nil {
-		return newShorten, nil
+		return newShorten, err
 	}
 
 	return newShorten, nil
